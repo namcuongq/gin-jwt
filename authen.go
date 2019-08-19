@@ -28,7 +28,7 @@ func (jwt *JWT) init() error {
 	}
 
 	if jwt.Verification == nil {
-		jwt.Verification = func(map[string]interface{}) (bool, error) {
+		jwt.Verification = func(*gin.Context, map[string]interface{}) (bool, error) {
 			return true, nil
 		}
 	}
@@ -66,7 +66,7 @@ func (jwt *JWT) TokenAuthMiddleware() gin.HandlerFunc {
 			})
 			return
 		}
-		ok, err := jwt.Verification(payload)
+		ok, err := jwt.Verification(c, payload)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]interface{}{
 				"code":    http.StatusInternalServerError,
