@@ -19,7 +19,7 @@ type JWT struct {
 	ExpiredHour   uint64
 	TokenHeadName string
 	Authenticator func(*gin.Context) (map[string]interface{}, error)
-	Verification  func(map[string]interface{}) (bool, error)
+	Verification  func(*gin.Context, map[string]interface{}) (bool, error)
 }
 
 type JwtResponse struct {
