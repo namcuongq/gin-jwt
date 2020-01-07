@@ -104,7 +104,7 @@ func (jwt *JWT) genToken(payload map[string]interface{}) (JwtResponse, error) {
 	res.Token = token
 	res.Expire = exp
 
-	exp = now.Add(time.Hour * time.Duration(jwt.ExpiredHour+72))
+	exp = now.Add(time.Hour * time.Duration(jwt.ExpiredHour+24))
 	claims = Claims{
 		payload,
 		gojwt.StandardClaims{

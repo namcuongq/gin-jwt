@@ -49,32 +49,33 @@ func main() {
 			if err := c.ShouldBind(&loginVals); err != nil {
 				  return nil, fmt.Errorf("error username or password missing")
 			  }
-        
+
 			if loginVals["username"] != "admin" || loginVals["password"] != "admin"{
       			  return nil, fmt.Errorf("authentication failed")
 			}
-      
+
 			var data = map[string]interface{}{
 				"id": 1,
 			}
-      
+
 			return data, nil
 		},
 		Verification: func(data map[string]interface{}) (bool, error) {
 			if fmt.Sprintf("%v",data["username"]) == "admin"{
       			  return true, nil
 			}
-      
+
 			return false, nil
 		},
 	})
-  
+
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}
-  
+
 	router.POST("/login", authen.LoginHandler)
-  
+	router.GET("/refresh", authen.RefreshToken)
+
 	router.Use(authen.TokenAuthMiddleware())
 	router.GET("/hello", helloHandler)
 
