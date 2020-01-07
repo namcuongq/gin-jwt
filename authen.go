@@ -2,8 +2,6 @@ package jwt
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,47 +36,11 @@ func (jwt *JWT) init() error {
 
 func (jwt *JWT) TokenAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		header := c.Request.Header.Get("Authorization")
-		token := ""
-
-		if jwt.TokenHeadName != "" {
-			arr := strings.Split(header, " ")
-			if len(arr) > 1 && arr[0] == jwt.TokenHeadName {
-				token = arr[1]
-			}
-		} else {
-			token = header
-		}
-
-		if len(token) < 1 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]interface{}{
-				"code":    http.StatusUnauthorized,
-				"message": "API token required",
-			})
-			return
-		}
-
-		payload, err := jwt.parseToken(token)
+		payload, code, err := jwt.validToken(c)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]interface{}{
-				"code":    http.StatusUnauthorized,
+			c.AbortWithStatusJSON(code, map[string]interface{}{
+				"code":    code,
 				"message": err.Error(),
-			})
-			return
-		}
-		ok, err := jwt.Verification(c, payload)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]interface{}{
-				"code":    http.StatusInternalServerError,
-				"message": ERROR_INTERNAL_SERVER,
-			})
-			return
-		}
-
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]interface{}{
-				"code":    http.StatusUnauthorized,
-				"message": ERROR_UNAUTHORIZED,
 			})
 			return
 		}

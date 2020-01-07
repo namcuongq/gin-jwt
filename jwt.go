@@ -3,6 +3,7 @@ package jwt
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	gojwt "github.com/dgrijalva/jwt-go"
@@ -36,6 +37,28 @@ const (
 	ERROR_INTERNAL_SERVER = "Internal Server Error"
 	ERROR_UNAUTHORIZED    = "unauthorized"
 )
+
+func (jwt *JWT) RefreshToken(c *gin.Context) {
+	payload, code, err := jwt.validToken(c)
+	if err != nil {
+		c.AbortWithStatusJSON(code, map[string]interface{}{
+			"code":    code,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	token, err := jwt.genToken(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"code":    http.StatusInternalServerError,
+			"message": ERROR_INTERNAL_SERVER,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, token)
+}
 
 func (jwt *JWT) LoginHandler(c *gin.Context) {
 	payload, err := jwt.Authenticator(c)
@@ -97,6 +120,38 @@ func (jwt *JWT) genToken(payload map[string]interface{}) (JwtResponse, error) {
 	res.RefreshToken = refreshToken
 
 	return res, err
+}
+
+func (jwt *JWT) validToken(c *gin.Context) (map[string]interface{}, int, error) {
+	header := c.Request.Header.Get("Authorization")
+	token := ""
+	if jwt.TokenHeadName != "" {
+		arr := strings.Split(header, " ")
+		if len(arr) > 1 && arr[0] == jwt.TokenHeadName {
+			token = arr[1]
+		}
+	} else {
+		token = header
+	}
+
+	if len(token) < 1 {
+		return nil, http.StatusUnauthorized, fmt.Errorf("API token required")
+	}
+
+	payload, err := jwt.parseToken(token)
+	if err != nil {
+		return nil, http.StatusUnauthorized, err
+	}
+
+	ok, err := jwt.Verification(c, payload)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf(ERROR_INTERNAL_SERVER)
+	}
+
+	if !ok {
+		return nil, http.StatusUnauthorized, fmt.Errorf(ERROR_UNAUTHORIZED)
+	}
+	return payload, http.StatusOK, nil
 }
 
 func (jwt *JWT) parseToken(ss string) (map[string]interface{}, error) {
