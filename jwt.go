@@ -24,9 +24,9 @@ type JWT struct {
 }
 
 type JwtResponse struct {
-	Expire       time.Time `json:"expire"`
-	Token        string    `json:"token"`
-	RefreshToken string    `json:"refresh_token"`
+	Expire       int64  `json:"expire"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 const (
